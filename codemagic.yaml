@@ -7,7 +7,9 @@ workflows:
       flutter: stable
     scripts:
       - name: Generate Android project
-        script: flutter create . --project-name hustlekit --org zw.hustlekit --platforms android
+        script: |
+          rm -rf android
+          flutter create . --project-name hustlekit --org zw.hustlekit --platforms android
       - name: Patch manifest
         script: |
           python3 - <<'EOF'
@@ -22,10 +24,17 @@ workflows:
                   'android:value="ca-app-pub-3940256099942544~3347511713"/>\n')
           s = s.replace('<application', top + '<application', 1)
           s = s.replace('</application>', meta + '</application>', 1)
+          s = s.replace('android:label="hustlekit"', 'android:label="HustleKit"')
           open(p, 'w').write(s)
           EOF
+      - name: Verify manifest
+        script: |
+          cat android/app/src/main/AndroidManifest.xml
+          grep -q "ads.APPLICATION_ID" android/app/src/main/AndroidManifest.xml
       - name: Get packages
         script: flutter pub get
+      - name: Generate app icon
+        script: dart run flutter_launcher_icons
       - name: Build APK
         script: flutter build apk --release
     artifacts:

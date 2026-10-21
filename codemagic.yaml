@@ -5,12 +5,15 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: stable
+      # For the Play Store build, uncomment these 2 lines after uploading your keystore:
+      # android_signing:
+      #   - hustlekit_keystore
     scripts:
       - name: Generate Android project
         script: |
           rm -rf android
           flutter create . --project-name hustlekit --org zw.hustlekit --platforms android
-      - name: Patch manifest
+      - name: Patch manifest and signing
         script: |
           python3 - <<'EOF'
           p = 'android/app/src/main/AndroidManifest.xml'
@@ -24,8 +27,21 @@ workflows:
                   'android:value="ca-app-pub-3940256099942544~3347511713"/>\n')
           s = s.replace('<application', top + '<application', 1)
           s = s.replace('</application>', meta + '</application>', 1)
-          s = s.replace('android:label="hustlekit"', 'android:label="HustleKit"')
+          s = s.replace('android:label="hustlekit"', 'android:label="HustleKit" android:allowBackup="false"')
           open(p, 'w').write(s)
+          g = 'android/app/build.gradle.kts'
+          t = open(g).read()
+          sign = ('    signingConfigs {\n        create("release") {\n'
+                  '            val ks = System.getenv("CM_KEYSTORE_PATH")\n'
+                  '            if (ks != null) {\n'
+                  '                storeFile = file(ks)\n'
+                  '                storePassword = System.getenv("CM_KEYSTORE_PASSWORD")\n'
+                  '                keyAlias = System.getenv("CM_KEY_ALIAS")\n'
+                  '                keyPassword = System.getenv("CM_KEY_PASSWORD")\n'
+                  '            }\n        }\n    }\n')
+          t = t.replace('    buildTypes {', sign + '    buildTypes {', 1)
+          t = t.replace('signingConfigs.getByName("debug")', 'signingConfigs.getByName(if (System.getenv("CM_KEYSTORE_PATH") != null) "release" else "debug")')
+          open(g, 'w').write(t)
           EOF
       - name: Verify manifest
         script: |
@@ -37,5 +53,8 @@ workflows:
         script: dart run flutter_launcher_icons
       - name: Build APK
         script: flutter build apk --release
+      - name: Build Play Store bundle
+        script: flutter build appbundle --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab

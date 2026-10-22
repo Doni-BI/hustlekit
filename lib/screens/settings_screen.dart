@@ -62,7 +62,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final name = TextEditingController(text: S.g('businessName')), type = TextEditingController(text: S.g('businessType')), phone = TextEditingController(text: S.g('phone'));
+  final name = TextEditingController(text: S.g('businessName')), type = TextEditingController(text: S.g('businessType')), phone = TextEditingController(text: S.g('phone')), tin = TextEditingController(text: S.g('tin')), vat = TextEditingController(text: S.g('vat'));
   int taps = 0;
 
   void owner() {
@@ -80,7 +80,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         bottomNavigationBar: const AdBanner(),
         body: ValueListenableBuilder(valueListenable: S.settings.listenable(), builder: (_, __, ___) => ListView(padding: const EdgeInsets.all(16), children: [
           tf('Business Name', name), tf('Business Type', type), tf('Phone', phone, k: TextInputType.phone),
-          FilledButton(onPressed: () { S.settings.putAll({'businessName': name.text.trim(), 'businessType': type.text.trim(), 'phone': phone.text.trim()}); snack(context, 'Saved'); }, child: const Text('Save')),
+          tf('TIN (optional)', tin), tf('VAT number (optional)', vat),
+          DropdownButtonFormField<String>(
+              value: S.g('taxClearance').isEmpty ? null : S.g('taxClearance'),
+              decoration: const InputDecoration(labelText: 'Do you have tax clearance?', border: OutlineInputBorder()),
+              items: ['Yes', 'No'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (v) => S.settings.put('taxClearance', v)),
+          const SizedBox(height: 10),
+          FilledButton(onPressed: () { S.settings.putAll({'businessName': name.text.trim(), 'businessType': type.text.trim(), 'phone': phone.text.trim(), 'tin': tin.text.trim(), 'vat': vat.text.trim()}); snack(context, 'Saved'); }, child: const Text('Save')),
           const Divider(height: 30),
           ListTile(title: const Text('Device ID'), subtitle: SelectableText(S.deviceId)),
           ListTile(title: const Text('Status'), subtitle: Text(S.isPro ? 'PRO (unlocked)' : 'Free')),
@@ -89,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(leading: const Icon(Icons.delete_forever, color: Colors.red), title: const Text('Clear All Data'), onTap: () => showDialog(context: context, builder: (c) => AlertDialog(
                 title: const Text('Clear ALL data?'), content: const Text('Receipts, debts, price list and settings (including PRO) will be deleted. Back up first.'),
                 actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')), FilledButton(onPressed: () async {
-                  await S.receipts.clear(); await S.debts.clear(); await S.products.clear();
+                  await S.receipts.clear(); await S.debts.clear(); await S.products.clear(); await S.expenses.clear();
                   final id = S.deviceId, pro = S.isPro;
                   await S.settings.clear(); await S.settings.put('deviceId', id); if (pro) await S.settings.put('isPro', true);
                   if (c.mounted) Navigator.pop(c);

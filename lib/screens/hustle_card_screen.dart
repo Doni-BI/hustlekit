@@ -11,8 +11,8 @@ class HustleCardScreen extends StatefulWidget {
 }
 
 class _HustleCardScreenState extends State<HustleCardScreen> {
-  static const keys = ['businessName', 'hustleWhat', 'hustleTarget', 'hustleWhere', 'dailyTarget', 'monthlyTarget', 'hustleWhy', 'hustleStory'];
-  static const labels = ['Business Name', 'What I sell', 'Who is my target customer', 'Where I hustle', 'Daily target (USD)', 'Monthly target (USD)', 'Why buy from me', 'My hustle story'];
+  static const keys = ['businessName', 'hustleWhat', 'hustleTarget', 'hustleWhere', 'dailyTarget', 'monthlyTarget', 'hustleWhy', 'hustleStory', 'tin', 'vat'];
+  static const labels = ['Business Name', 'What I sell', 'Who is my target customer', 'Where I hustle', 'Daily target (USD)', 'Monthly target (USD)', 'Why buy from me', 'My hustle story', 'TIN (optional)', 'VAT number (optional)'];
   late final Map<String, TextEditingController> c = {for (final k in keys) k: TextEditingController(text: S.g(k))};
   final sc = ScreenshotController();
 
@@ -55,7 +55,7 @@ class _HustleCardScreenState extends State<HustleCardScreen> {
       bottomNavigationBar: const AdBanner(),
       body: ListView(padding: const EdgeInsets.all(14), children: [
         for (var i = 0; i < keys.length; i++)
-          Focus(onFocusChange: (_) => setState(() {}), child: tf(labels[i], c[keys[i]]!, k: i == 4 || i == 5 ? TextInputType.number : null, lines: i >= 6 ? 3 : 1)),
+          Focus(onFocusChange: (_) => setState(() {}), child: tf(labels[i], c[keys[i]]!, k: i == 4 || i == 5 ? TextInputType.number : null, lines: (i == 6 || i == 7) ? 3 : 1)),
         ListenableBuilder(listenable: Listenable.merge(c.values.toList()), builder: (_, __) => Screenshot(controller: sc, child: Container(
           padding: const EdgeInsets.all(20), color: kGreen,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -70,6 +70,8 @@ class _HustleCardScreenState extends State<HustleCardScreen> {
             const Divider(color: kGold),
             Text('Daily Target ${c['dailyTarget']!.text.isEmpty ? '\$0' : '\$${c['dailyTarget']!.text}'}   Monthly \$${c['monthlyTarget']!.text.isEmpty ? '0' : c['monthlyTarget']!.text}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             Text('Phone: ${S.g('phone')}', style: const TextStyle(color: Colors.white)),
+            if (c['tin']!.text.isNotEmpty) Text('TIN: ${c['tin']!.text}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            if (c['vat']!.text.isNotEmpty) Text('VAT No: ${c['vat']!.text}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
             const Align(alignment: Alignment.centerRight, child: Text('Powered by HustleKit', style: TextStyle(color: kGold, fontSize: 11))),
           ]),
         ))),
